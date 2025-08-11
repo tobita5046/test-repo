@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Simple Shooting Game</title>
+  <style>
+    canvas { background: #000; display: block; margin: 0 auto; }
+    body { text-align: center; color: white; background: #222; font-family: sans-serif; }
+  </style>
+</head>
+<body>
+  <h1>Simple Shooting Game</h1>
+  <p>Use the arrow keys to move and space to shoot.</p>
+  <canvas id="game" width="480" height="320"></canvas>
+  <script>
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+
+    const player = { x: canvas.width / 2 - 15, y: canvas.height - 30, w: 30, h: 15 };
+    let bullet = null;
+    const enemy = { x: 20, y: 40, w: 30, h: 30, dir: 1 };
+    let score = 0;
+    const keys = {};
+
+    document.addEventListener('keydown', (e) => {
+      keys[e.code] = true;
+      if (e.code === 'Space' && !bullet) {
+        bullet = { x: player.x + player.w / 2 - 2, y: player.y };
+      }
+    });
+    document.addEventListener('keyup', (e) => (keys[e.code] = false));
+
+    function update() {
+      if (keys['ArrowLeft']) player.x -= 5;
+      if (keys['ArrowRight']) player.x += 5;
+      player.x = Math.max(0, Math.min(canvas.width - player.w, player.x));
+
+      if (bullet) {
+        bullet.y -= 8;
+        if (bullet.y < 0) bullet = null;
+      }
+
+      enemy.x += enemy.dir * 3;
+      if (enemy.x <= 0 || enemy.x + enemy.w >= canvas.width) enemy.dir *= -1;
+
+      if (
+        bullet &&
+        bullet.x < enemy.x + enemy.w &&
+        bullet.x + 4 > enemy.x &&
+        bullet.y < enemy.y + enemy.h &&
+        bullet.y + 10 > enemy.y
+      ) {
+        bullet = null;
+        enemy.x = Math.random() * (canvas.width - enemy.w);
+        score++;
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#0f0';
+      ctx.fillRect(player.x, player.y, player.w, player.h);
+
+      if (bullet) {
+        ctx.fillStyle = '#ff0';
+        ctx.fillRect(bullet.x, bullet.y, 4, 10);
+      }
+
+      ctx.fillStyle = '#f00';
+      ctx.fillRect(enemy.x, enemy.y, enemy.w, enemy.h);
+
+      ctx.fillStyle = '#fff';
+      ctx.font = '16px sans-serif';
+      ctx.fillText('Score: ' + score, 10, 20);
+    }
+
+    function loop() {
+      update();
+      draw();
+      requestAnimationFrame(loop);
+    }
+    loop();
+  </script>
+</body>
+</html>
