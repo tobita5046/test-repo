@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>H2O Shooting Game</title>
+  <style>
+    canvas { background: #000; display: block; margin: 0 auto; }
+    body { text-align: center; color: white; background: #222; font-family: sans-serif; }
+  </style>
+</head>
+<body>
+  <h1>Make Water: H<sub>2</sub>O Shooting Game</h1>
+  <p>Use the arrow keys to move and space to shoot hydrogen (H) at the moving oxygen (O). Two hits create water!</p>
+  <canvas id="game" width="480" height="320"></canvas>
+  <script>
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+
+    const player = { x: canvas.width / 2 - 15, y: canvas.height - 30, w: 30, h: 15 };
+    let bullet = null;
+    const enemy = { x: 20, y: 40, size: 40, dir: 1, hits: 0 };
+    let score = 0;
+    let waterFlash = 0;
+    const keys = {};
+
+    document.addEventListener('keydown', (e) => {
+      keys[e.code] = true;
+      if (e.code === 'Space' && !bullet) {
+        bullet = { x: player.x + player.w / 2 - 4, y: player.y, w: 8, h: 16 };
+      }
+    });
+    document.addEventListener('keyup', (e) => (keys[e.code] = false));
+
+    function update() {
+      if (keys['ArrowLeft']) player.x -= 5;
+      if (keys['ArrowRight']) player.x += 5;
+      player.x = Math.max(0, Math.min(canvas.width - player.w, player.x));
+
+      if (bullet) {
+        bullet.y -= 8;
+        if (bullet.y + bullet.h < 0) bullet = null;
+      }
+
+      enemy.x += enemy.dir * 3;
+      if (enemy.x <= 0 || enemy.x + enemy.size >= canvas.width) enemy.dir *= -1;
+
+      if (
+        bullet &&
+        bullet.x < enemy.x + enemy.size &&
+        bullet.x + bullet.w > enemy.x &&
+        bullet.y < enemy.y + enemy.size &&
+        bullet.y + bullet.h > enemy.y
+      ) {
+        bullet = null;
+        enemy.hits++;
+        if (enemy.hits >= 2) {
+          score++;
+          waterFlash = 60;
+          enemy.x = Math.random() * (canvas.width - enemy.size);
+          enemy.hits = 0;
+        }
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#0f0';
+      ctx.fillRect(player.x, player.y, player.w, player.h);
+
+      if (bullet) {
+        ctx.fillStyle = '#0ff';
+        ctx.font = '16px sans-serif';
+        ctx.fillText('H', bullet.x, bullet.y);
+      }
+
+      ctx.fillStyle = '#f00';
+      ctx.beginPath();
+      ctx.arc(enemy.x + enemy.size / 2, enemy.y + enemy.size / 2, enemy.size / 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.font = '20px sans-serif';
+      ctx.fillText('O', enemy.x + enemy.size / 2 - 6, enemy.y + enemy.size / 2 + 7);
+
+      ctx.fillStyle = '#fff';
+      ctx.font = '16px sans-serif';
+      ctx.fillText('Water molecules: ' + score, 10, 20);
+
+      if (waterFlash > 0) {
+        ctx.fillStyle = '#0ff';
+        ctx.font = '24px sans-serif';
+        ctx.fillText('H₂O!', canvas.width / 2 - 30, canvas.height / 2);
+        waterFlash--;
+      }
+    }
+
+    function loop() {
+      update();
+      draw();
+      requestAnimationFrame(loop);
+    }
+    loop();
+  </script>
+</body>
+</html>
